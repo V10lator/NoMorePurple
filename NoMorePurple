@@ -17,12 +17,12 @@ namespace ModClass
 
         public string Name 
         {
-            get { return "Enter name of the mod here"; }
+            get { return "No More Purple"; }
         }
 
         public string Description 
         {
-            get { return "Enter description of the mod here"; }
+            get { return "Purple is out!"; }
         }
     }
 
