@@ -34,8 +34,11 @@ namespace ModClass
 		*/
 		public override void OnLevelLoaded (LoadMode mode)
 		{
-		  /* The value m_WaterColorDirty is accessed through a getter titled _WaterColorDirty */
-			Shader.SetGlobalColor("_WaterColorDirty", new Vector4(0f, 0f, 0f));	// R, G, B
+			Color color = new Color(0.243f, 0f, 0f);
+		  	/* The value m_GrassPollutionColorOffset is accessed through a getter titled _GrassPollutionColorOffset */
+			Shader.SetGlobalVector("_GrassPollutionColorOffset", color);	// R, G, B
+			/* The value m_WaterColorDirty is accessed through a getter titled _WaterColorDirty */
+			Shader.SetGlobalColor("_WaterColorDirty", color);	// R, G, B
 		}
 	}
 }
