@@ -14,11 +14,17 @@ namespace NoMorePurple
 
     public class NoMorePurple : LoadingExtensionBase, IUserMod 
     {
-		OptionWindow optionWindow = null;
+		private OptionWindow optionWindow = null;
+		private static NoMorePurple myself = null;
 
+		public NoMorePurple ()
+		{
+			NoMorePurple.myself = this;
+		}
+		
         public string Name {
 			get {
-				if (optionWindow == null) {
+				if(this.optionWindow == null) {
 					GameObject go = new GameObject ("No More Purples OptionWindow");
 					go.AddComponent<OptionWindow> ();
 					this.optionWindow = go.GetComponent<OptionWindow> ();
@@ -29,10 +35,15 @@ namespace NoMorePurple
 
         public string Description 
         {
-            get { return "Purple is out!"; }
+            get { return "Define your own color for waste!"; }
         }
 		
-		public static void disable ()
+		public static NoMorePurple instance
+		{
+			get { return NoMorePurple.myself; }
+		}
+		
+		public void disable ()
 		{
 			//TODO
 		}
@@ -40,8 +51,10 @@ namespace NoMorePurple
 		public override void OnCreated (ILoading loading)
 		{
 			base.OnCreated (loading);
-			if (optionWindow != null)
+			if (optionWindow != null) {
 				this.optionWindow.Load ();
+				this.optionWindow.Start ();
+			}
 		}
 
 		/*
