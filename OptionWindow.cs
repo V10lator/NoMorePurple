@@ -15,9 +15,10 @@ namespace NoMorePurple
 	{
 		private GameObject button_options;
 		private GameObject panel;
-		public UIColorField field_color;
-		private bool ready = false;
-
+		public Color color;
+		private Color? tmpColor;
+		public bool ready = false;
+		
 		public void Start ()
 		{
 			//TODO: There must be a way to get the GameObject from NoMorePurple.instance instead of this slow hack
@@ -54,7 +55,6 @@ namespace NoMorePurple
 			
 			GameObject template = this.panel.GetComponentsInChildren<UICheckBox> ().Where (c => c.name == "EdgeScrolling").FirstOrDefault ().gameObject;
 			GameObject.Destroy (template.GetComponent<BindProperty> ());
-			Vector3 position = template.transform.localPosition;
 			
 			GameObject caption = null;
 			foreach (Transform transform in this.panel.transform)
@@ -84,15 +84,8 @@ namespace NoMorePurple
 			);
 			
 			
-			GameObject go = new GameObject ("No More Purples ColorField", typeof(UIColorField));
-			this.field_color = go.GetComponent<UIColorField> ();
-			this.field_color.transform.SetParent (oList.transform);
-			this.field_color.isVisible = true;
-//			this.field_color.zOrder = 0;
-			
 			GameObject save = GameObject.Instantiate<GameObject> (this.button_options);
 			save.transform.SetParent (this.panel.transform);
-			
 			UIButton saveButton = save.GetComponent<UIButton> ();
 			saveButton.isVisible = true;
 			saveButton.eventClick += Save;
@@ -100,6 +93,24 @@ namespace NoMorePurple
 			saveButton.text = "OK";
 			saveButton.AlignTo (panel.GetComponent<UIPanel> (), UIAlignAnchor.BottomRight);
 			
+			GameObject go = new GameObject ("No More Purples ColorPicker", typeof(UILabel));
+			UILabel label = go.GetComponent<UILabel> ();
+			label.text = "Test";
+			label.transform.SetParent (oList.transform);
+			label.isVisible = true;
+			label.zOrder = 0;
+			/*
+			go = new GameObject ("No More Purples ColorPicker", typeof(UIColorPicker));
+			UIColorPicker field = go.GetComponent<UIColorPicker> ();
+			Debug.Log ("----- field parent: " + field.transform);
+			Debug.Log ("----- field.component parent: " + field.component.transform);
+			field.component.transform.SetParent (oList.transform);
+			field.transform.SetParent (field.component.transform);
+			field.color = this.color;
+			field.eventColorUpdated += updateTmpColor;
+			field.component.isVisible = true;
+			field.component.zOrder = 1;
+			*/
 			this.ready = true;
 		}
 
@@ -114,6 +125,7 @@ namespace NoMorePurple
 				}
 			} catch (FileNotFoundException) {
 				// No options file yet
+				this.color = new Color (0f, 0f, 0f);
 				return;
 			} catch (Exception e) {
 				Debug.Log ("NoMorePurple: " + e.GetType ().Name + "while reading xml file: " + e.Message + "\n" + e.StackTrace);
@@ -121,15 +133,14 @@ namespace NoMorePurple
 				return;
 			}
 			
-			// Convert String to Color, see http://orbcreation.com/orbcreation/page.orb?974
-			
+			// Convert String to Color
 			if (input == null || input.Length != 7) {
 				Debug.Log ("NoMorePurple: Error reading xml file: Wanted Color, got \"" + input + "\"");
 				NoMorePurple.instance.disable ();
 				return;
 			}
 			
-			Color color = new Color (0, 0, 0);
+			Color color = new Color (0f, 0f, 0f);
 			try {
 				string sub = input.Substring (1, input.Length - 1);
 				color.r = (float)System.Int32.Parse (sub.Substring (0, 2), NumberStyles.AllowHexSpecifier) / 255.0f;
@@ -137,27 +148,17 @@ namespace NoMorePurple
 				color.b = (float)System.Int32.Parse (sub.Substring (4, 2), NumberStyles.AllowHexSpecifier) / 255.0f;
 			} catch (Exception e) {
 				Debug.Log ("NoMorePurple: " + e.GetType ().Name + " while parsing xml file: " + e.Message + "\n" + e.StackTrace);
-				NoMorePurple.instance.disable();
+				NoMorePurple.instance.disable ();
 				return;
 			}
 			
-			this.field_color.selectedColor = color;
+			this.color = color;
 		}
 		
 		void OnLevelWasLoaded(int level)
 		{
 			if (level == 5)
 				this.ready = false;
-		}
-		
-		void Update ()
-		{
-			if (!this.ready && Application.loadedLevel == 5) {
-				try {
-					Start ();
-				} catch {
-				}
-			}
 		}
 		
 		private void Open (UIComponent component, UIMouseEventParameter eventParam)
@@ -170,23 +171,30 @@ namespace NoMorePurple
 		private void Close (UIComponent component, UIMouseEventParameter eventParam)
 		{
 			this.panel.GetComponent<UIPanel> ().isVisible = false;
+			this.tmpColor = null;
+		}
+		
+		private string toHex(Color32 aColor) {
+			String rs = Convert.ToString(aColor.r,16).ToUpper();
+			String gs = Convert.ToString(aColor.g,16).ToUpper();
+			String bs = Convert.ToString(aColor.b,16).ToUpper();
+			while(rs.Length < 2) rs= "0" + rs;
+			while(gs.Length < 2) gs= "0" + gs;
+			while(bs.Length < 2) bs= "0" + bs;
+			return "#"+ rs + gs + bs;
 		}
 		
 		private void Save (UIComponent component, UIMouseEventParameter eventParam)
 		{
+			if (this.tmpColor != null)
+				this.color = this.tmpColor.Value;
 			Close (null, null);
-			
-			// Convert Color to String, see http://orbcreation.com/orbcreation/page.orb?974
-			string hex = "#" + 
-				this.field_color.selectedColor.r.ToString ("X2") + 
-				this.field_color.selectedColor.g.ToString ("X2") + 
-				this.field_color.selectedColor.b.ToString ("X2");
 			
 			try {
 				XmlSerializer serializer = new XmlSerializer (typeof(string));
 				using(StreamWriter writer = new StreamWriter("NoMorePurple.xml"))
 				{
-					serializer.Serialize(writer, hex);
+					serializer.Serialize(writer, toHex (this.color));
 					writer.Flush();
 					writer.Close();
 				}
@@ -195,6 +203,11 @@ namespace NoMorePurple
 			{
 				Debug.Log("NoMorePurple: "+e.GetType().Name+" while writing xml file: "+e.Message+"\n"+e.StackTrace);
 			}
+		}
+		
+		private void updateTmpColor (Color color)
+		{
+			this.tmpColor = color;
 		}
 		
 		void Awake()

@@ -12,9 +12,9 @@ using UnityEngine;
 namespace NoMorePurple
 {
 
-    public class NoMorePurple : LoadingExtensionBase, IUserMod 
+    public class NoMorePurple : MonoBehaviour, IUserMod
     {
-		private OptionWindow optionWindow = null;
+		public OptionWindow optionWindow = null;
 		private static NoMorePurple myself = null;
 
 		public NoMorePurple ()
@@ -24,10 +24,11 @@ namespace NoMorePurple
 		
         public string Name {
 			get {
-				if(this.optionWindow == null) {
+				if (this.optionWindow == null) {
 					GameObject go = new GameObject ("No More Purples OptionWindow");
 					go.AddComponent<OptionWindow> ();
 					this.optionWindow = go.GetComponent<OptionWindow> ();
+					this.optionWindow.Load ();
 				}
 				return "No More Purple";
 			}
@@ -46,14 +47,22 @@ namespace NoMorePurple
 		public void disable ()
 		{
 			//TODO
+			Debug.Log ("---- Disable called!");
 		}
 		
+		void Awake()
+		{
+			DontDestroyOnLoad(this);
+		}
+	}
+	
+	public class NMPListener : LoadingExtensionBase
+	{
 		public override void OnCreated (ILoading loading)
 		{
 			base.OnCreated (loading);
-			if (optionWindow != null) {
-				this.optionWindow.Load ();
-				this.optionWindow.Start ();
+			if (NoMorePurple.instance.optionWindow != null && !NoMorePurple.instance.optionWindow.ready) {
+				NoMorePurple.instance.optionWindow.Start ();
 			}
 		}
 
@@ -63,9 +72,9 @@ namespace NoMorePurple
 		public override void OnLevelLoaded (LoadMode mode)
 		{
 			/* The value m_GrassPollutionColorOffset is accessed through a getter titled _GrassPollutionColorOffset */
-			Shader.SetGlobalVector ("_GrassPollutionColorOffset", this.optionWindow.field_color.selectedColor);
+			Shader.SetGlobalColor ("_GrassPollutionColorOffset", NoMorePurple.instance.optionWindow.color);
 			/* The value m_WaterColorDirty is accessed through a getter titled _WaterColorDirty */
-			Shader.SetGlobalColor ("_WaterColorDirty", this.optionWindow.field_color.selectedColor);
+			Shader.SetGlobalColor ("_WaterColorDirty", NoMorePurple.instance.optionWindow.color);
 		}
 	}
 }
