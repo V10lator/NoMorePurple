@@ -72,9 +72,9 @@ namespace NoMorePurple
 		public override void OnLevelLoaded (LoadMode mode)
 		{
 			/* The value m_GrassPollutionColorOffset is accessed through a getter titled _GrassPollutionColorOffset */
-			Shader.SetGlobalColor ("_GrassPollutionColorOffset", NoMorePurple.instance.optionWindow.color);
+			Shader.SetGlobalColor ("_GrassPollutionColorOffset", NoMorePurple.instance.optionWindow.grassColor);
 			/* The value m_WaterColorDirty is accessed through a getter titled _WaterColorDirty */
-			Shader.SetGlobalColor ("_WaterColorDirty", NoMorePurple.instance.optionWindow.color);
+			Shader.SetGlobalColor ("_WaterColorDirty", NoMorePurple.instance.optionWindow.waterColor);
 		}
 	}
 }
